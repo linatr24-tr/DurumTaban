@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# --- Allow only x64/Release folder ---
+!x64/
+x64/*
+!x64/Release/
+x64/Release/*
+!x64/Release/*.exe
+!x64/Release/*.pdb
+!x64/Release/*.ttf
