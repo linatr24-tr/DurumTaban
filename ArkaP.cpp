@@ -65,6 +65,7 @@
         Sekilvec.push_back(Tilee);
     }
     void ArkaP::Hesapla() {
+        Engel.clear();
         for (size_t i = 0; i < 21; i++) {  //alt arkaplan kareleri hesaplar
             for (size_t j = 0; j < 12; j++) {
                 if (j == 0) continue;

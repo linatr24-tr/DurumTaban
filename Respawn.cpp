@@ -1,24 +1,30 @@
-//Respawn.cpp
+ï»¿//Respawn.cpp
 #include "Respawn.h"
 #include "ArkaP.h"
 #include <iostream>
+#include <algorithm>
+
 #include <SFML/Graphics.hpp>
-#include "DurumYönetici.h"
+#include "DurumYÃ¶netici.h"
+#include "Effect.h"
 class ArkaP;
+class Effect;
+bool Respawn::efektAktif = false;
+Respawn* Respawn::aktifInstance = nullptr;  // â† DOÄRU
 std::random_device Respawn::rd{};
 std::mt19937 Respawn::gen{ Respawn::rd() };
 sf::Clock Respawn::Saat{};
 std::vector<sf::FloatRect> ArkaP::Engel{};
 
-Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles), yonetici(yonetici),font("arial.ttf"),text(font)
+Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles), yonetici(yonetici), font("arial.ttf"), text(font)
 {
-
+    aktifInstance = this; // Bu instance'Ä± global yap
 }
 
 
  
 
-    // ÖNEMLİ: Belirtilen pozisyondaki blok bounds'larını hesapla
+    // Ã–NEMLÄ°: Belirtilen pozisyondaki blok bounds'larÄ±nÄ± hesapla
     std::vector<sf::FloatRect> Respawn::BlokBoundslariniGetir(float offsetX = 0, float offsetY = 0) const {
         std::vector<sf::FloatRect> bloklar;
 
@@ -37,7 +43,7 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
         return bloklar;
     }
 
-    // Geliştirilmiş çarpışma kontrolü - offset parametreli
+    // GeliÅŸtirilmiÅŸ Ã§arpÄ±ÅŸma kontrolÃ¼ - offset parametreli
     bool Respawn::CarpismaKontrol(const std::vector<sf::FloatRect>& engeller, float offsetX = 0, float offsetY = 0) const {
         std::vector<sf::FloatRect> benimBloklarim = BlokBoundslariniGetir(offsetX, offsetY);
 
@@ -45,12 +51,12 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
             for (const auto& engel : engeller) {
                 if (benimBlok.findIntersection(engel).has_value()) {
 
-                    return true; // Çarpışma var
+                    return true; // Ã‡arpÄ±ÅŸma var
                 }
             }
         }
 
-        return false; // Çarpışma yok
+        return false; // Ã‡arpÄ±ÅŸma yok
     }
 
     int Respawn::myrand(int min, int max) {
@@ -168,15 +174,15 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
 
 
 
-    // YENİ: Tüm engelleri kabul eden hareket fonksiyonu
-    void Respawn::hareketGuvenlı(const std::vector<sf::FloatRect>& duvarlar,
+    // YENÄ°: TÃ¼m engelleri kabul eden hareket fonksiyonu
+    void Respawn::hareketGuvenlÄ±(const std::vector<sf::FloatRect>& duvarlar,
          float dt) {
         yatayTimer += dt;
 
         TusCd();
         if (Yerdemi || Tus) return;
 
-        // Tüm engelleri birleştir
+        // TÃ¼m engelleri birleÅŸtir
         std::vector<sf::FloatRect> tumEngeller = duvarlar;
      //   for (const auto& va : doluBloklar) {
          //   tumEngeller.push_back(va.getBounds());
@@ -194,7 +200,7 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
             TusSaat.restart();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) && yatayTimer >= yatayCd) {
-            // Sağ hareket kontrol
+            // SaÄŸ hareket kontrol
             if (!CarpismaKontrol(tumEngeller, 17.0f, 0)) {
                 x += 17.0f;
                 VertexOlustur();
@@ -205,7 +211,7 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
             TusSaat.restart();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) && yatayTimer >= yatayCd) {
-            // Aşağı hareket kontrol
+            // AÅŸaÄŸÄ± hareket kontrol
 
             if (!CarpismaKontrol(tumEngeller, 0, 12.0f)) {
                 y += 17.0f;
@@ -219,7 +225,7 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
             TusSaat.restart();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
-            DondurGuvenlı(tumEngeller);
+            DondurGuvenlÄ±(tumEngeller);
             Tus = true;
             TusSaat.restart();
         }
@@ -243,8 +249,8 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
         VertexOlustur();
     }
 
-    // YENİ: Güvenli dönüş
-    void Respawn::DondurGuvenlı(const std::vector<sf::FloatRect>& engeller) {
+    // YENÄ°: GÃ¼venli dÃ¶nÃ¼ÅŸ
+    void Respawn::DondurGuvenlÄ±(const std::vector<sf::FloatRect>& engeller) {
         if (Yerdemi) return;
 
         // Eski matrisi sakla
@@ -263,9 +269,9 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
 
         matris = yeniMatris;
 
-        // Döndükten sonra çarpışma kontrolü
+        // DÃ¶ndÃ¼kten sonra Ã§arpÄ±ÅŸma kontrolÃ¼
         if (CarpismaKontrol(engeller, 0, 0)) {
-            // Çarpışma varsa geri al
+            // Ã‡arpÄ±ÅŸma varsa geri al
             matris = eskiMatris;
         }
 
@@ -281,71 +287,71 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
         }
     }
 
-    // Sekil.h dosyası içinde, class Sekil'in public bölümünde:
+    // Sekil.h dosyasÄ± iÃ§inde, class Sekil'in public bÃ¶lÃ¼mÃ¼nde:
 
-        // YENİ: Düzeltilmiş ve sadeleştirilmiş Gravity fonksiyonu
+        // YENÄ°: DÃ¼zeltilmiÅŸ ve sadeleÅŸtirilmiÅŸ Gravity fonksiyonu
     void Respawn::gra(std::vector<sf::FloatRect> duvar,float dt) {
         if (Yerdemi) return;
 
-        // Main'den gelen delta time'ı (dt) mevcut sayaca ekle
+        // Main'den gelen delta time'Ä± (dt) mevcut sayaca ekle
         dusmeTimer += dt;
 
-        // Eğer sayaç, düşme hızını geçtiyse (örneğin 0.45 saniye)
+        // EÄŸer sayaÃ§, dÃ¼ÅŸme hÄ±zÄ±nÄ± geÃ§tiyse (Ã¶rneÄŸin 0.45 saniye)
         if (dusmeTimer >= dusmeHizi)
         {
-            dusmeTimer = 0.0f; // Sayacı sıfırla
+            dusmeTimer = 0.0f; // SayacÄ± sÄ±fÄ±rla
 
-            float step = bloklukBoyut + 1.0f; // Bir adımın boyutu (16 + 1 = 17 piksel)
+            float step = bloklukBoyut + 1.0f; // Bir adÄ±mÄ±n boyutu (16 + 1 = 17 piksel)
 
-            // 1. Gelecekteki pozisyonu (bir adım aşağısını) kontrol et
+            // 1. Gelecekteki pozisyonu (bir adÄ±m aÅŸaÄŸÄ±sÄ±nÄ±) kontrol et
             if (CarpismaKontrol(duvar, 0, step)) {
-                // Eğer aşağıda engel varsa:
-              Isaretle();              // Bloğu olduğu yere çivile
-               RastgeleSekilOlustur();  // Yeni şekil yarat
-                VertexOlustur();         // Yeni şekli çiz
-                return;                  // Fonksiyondan çık
+                // EÄŸer aÅŸaÄŸÄ±da engel varsa:
+              Isaretle();              // BloÄŸu olduÄŸu yere Ã§ivile
+               RastgeleSekilOlustur();  // Yeni ÅŸekil yarat
+                VertexOlustur();         // Yeni ÅŸekli Ã§iz
+                return;                  // Fonksiyondan Ã§Ä±k
             }
 
-            // 2. Eğer engel yoksa şekli bir adım aşağı indir
+            // 2. EÄŸer engel yoksa ÅŸekli bir adÄ±m aÅŸaÄŸÄ± indir
             y += step;
-            VertexOlustur(); // Görünümü güncelle
+            VertexOlustur(); // GÃ¶rÃ¼nÃ¼mÃ¼ gÃ¼ncelle
         }
     }
 
 
 
     void Respawn::Isaretle() {
-        // Her bloğu ayrı ayrı Doluvec'e ekle ve Dolu matrisine kaydet
+        // Her bloÄŸu ayrÄ± ayrÄ± Doluvec'e ekle ve Dolu matrisine kaydet
         for (size_t i = 0; i < matris.size(); i++) {
             for (size_t j = 0; j < matris[i].size(); j++) {
                 if (matris[i][j] == 1) {
-                    // Bloğun gerçek koordinatları
+                    // BloÄŸun gerÃ§ek koordinatlarÄ±
                     float blokX = x + j * (bloklukBoyut + 1);
                     float blokY = y + i * (bloklukBoyut + 1);
 
                     // Dolu matrisindeki pozisyonu hesapla
-                    // ArkaP matrisine göre: j=0 sol duvar, j=1-10 oyun alanı, j=11 sağ duvar
+                    // ArkaP matrisine gÃ¶re: j=0 sol duvar, j=1-10 oyun alanÄ±, j=11 saÄŸ duvar
                     int satir = static_cast<int>((blokY - 100) / (bloklukBoyut + 1));
-                    int sutun = static_cast<int>((blokX - 200) / (bloklukBoyut + 1)); // -1 çünkü j=1'den başlar
+                    int sutun = static_cast<int>((blokX - 200) / (bloklukBoyut + 1)); // -1 Ã§Ã¼nkÃ¼ j=1'den baÅŸlar
 
-                    // Dolu matrisine işaretle (0-20 satır, 0-9 sütun)
+                    // Dolu matrisine iÅŸaretle (0-20 satÄ±r, 0-9 sÃ¼tun)
                     if (satir >= 0 && satir < static_cast<int>(Dolu.size()) &&
                         sutun >= 0 && sutun < static_cast<int>(Dolu[0].size())) {
                         Dolu[satir][sutun] = 1;
 
-                        // Bloğun matristeki pozisyonundan gerçek ekran koordinatlarını hesapla
-                        // ArkaP matrisinde j=1'den başlıyor (j=0 sol duvar)
+                        // BloÄŸun matristeki pozisyonundan gerÃ§ek ekran koordinatlarÄ±nÄ± hesapla
+                        // ArkaP matrisinde j=1'den baÅŸlÄ±yor (j=0 sol duvar)
                         blokX = 200 + (sutun + 1) * (bloklukBoyut + 1);
                         blokY = 100 + satir * (bloklukBoyut + 1);
                     }
 
-                    // Bu blok için ayrı bir VertexArray oluştur
+                    // Bu blok iÃ§in ayrÄ± bir VertexArray oluÅŸtur
                     sf::VertexArray tekBlok(sf::PrimitiveType::Triangles);
 
-                    // Bloğun rengi (beyaz yap)
+                    // BloÄŸun rengi (beyaz yap)
                     sf::Color blokRenk = sf::Color::White;
 
-                    // 6 vertex ekle (2 üçgen = 1 kare)
+                    // 6 vertex ekle (2 Ã¼Ã§gen = 1 kare)
                     sf::Vertex v1;
                     v1.position = { blokX, blokY };
                     v1.color = blokRenk;
@@ -376,69 +382,174 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
                     v6.color = blokRenk;
                     tekBlok.append(v6);
 
-                    // Bu bloğu Doluvec'e ekle
+                    // Bu bloÄŸu Doluvec'e ekle
                     Doluvec.push_back(tekBlok);
                 }
             }
         }
 
-        // Satır silme kontrolü
+        // SatÄ±r silme kontrolÃ¼
         Sil();
 
-        // Şekli yukarı taşı (yeni şekil için)
+        // Åekli yukarÄ± taÅŸÄ± (yeni ÅŸekil iÃ§in)
         x = 216;
         y = 100;
     }
 
-    // YENİ: Blok bazlı çarpma
+    // YENÄ°: Blok bazlÄ± Ã§arpma
 
 
 
 
 
 
-    // YENİ: Yan çarpışma kontrolü
+    // YENÄ°: Yan Ã§arpÄ±ÅŸma kontrolÃ¼
     bool Respawn::yan(std::vector<sf::FloatRect> duvar) {
         if (Yerdemi) return true;
         return CarpismaKontrol(duvar);
     }
-    void Respawn::Sil() {
-        int a = 0; //Toplam kac satır silindiğini sayar
-        for (int i = Dolu.size() - 1; i >= 0; i--) {  // Aşağıdan yukarı kontrol et
+
+
+    
+
+void Respawn::Sil() {
+        // EÄŸer efekt aktifse satÄ±r silme iÅŸlemini yapma
+        if (efektAktif) return;
+
+        // Ã–nce tÃ¼m dolu satÄ±rlarÄ± bul
+        std::vector<int> doluSatirlar;
+
+        for (int i = 19; i >= 0; i--) {
+            
             bool satirDolu = true;
+            if (i >= Dolu.size()) continue;
             for (int j = 0; j < Dolu[i].size(); j++) {
                 if (Dolu[i][j] == 0) {
                     satirDolu = false;
-                    break;
+                        break;
                 }
             }
 
             if (satirDolu) {
-                a++;
-                SilinenS++;
-
-
-                // 1) Bu satırı sil
-                for (int j = 0; j < 10; j++)
-                    Dolu[i][j] = 0;
-
-                // 2) Üst satırları aşağı kaydır
-                for (int k = i; k > 0; k--) {
-                    Dolu[k] = Dolu[k - 1];
-                }
-
-                // İlk satır sıfır olsun
-                Dolu[0] = std::vector<int>(10, 0);
-
-                // 3) Doluvec'i güncelle
-                SatirlariKaydir(i);
-
-                // Aynı satırı tekrar kontrol et (yukarıdan kayma olduğu için)
-                i++;
+                doluSatirlar.push_back(i);
             }
         }
 
+        // EÄŸer dolu satÄ±r varsa efekt baÅŸlat
+        if (!doluSatirlar.empty()) {
+            SilinenS += doluSatirlar.size(); // Toplam silinen sayÄ±sÄ±nÄ± gÃ¼ncelle
+
+            // TÃ¼m dolu satÄ±rlar iÃ§in efekt baÅŸlat
+            yonetici->DurumEkle(std::make_unique<Effect>(yonetici, doluSatirlar, 200, 100));
+        }
     }
+
+    // SatirSilmeyiTamamla fonksiyonunu gÃ¼ncelle - DÃœZELTÄ°LMÄ°Å VERSÄ°YON:
+void Respawn::SatirSilmeyiTamamla(const std::vector<int>& satirIndexler) {
+    // 1. SatÄ±rlarÄ± sÄ±rala
+    std::vector<int> siraliSatirlar = satirIndexler;
+    std::sort(siraliSatirlar.begin(), siraliSatirlar.end());
+
+    // 2. Silinen satÄ±rlarÄ± matriste temizle (0 yap)
+    for (int satirIndex : siraliSatirlar) {
+        for (int j = 0; j < 10; j++) {
+            Dolu[satirIndex][j] = 0;
+        }
+    }
+
+    // 3. YENÄ° MATRÄ°S OLUÅTUR VE KAYDIRMA MANTIÄI
+    std::vector<std::vector<int>> yeniDolu(21, std::vector<int>(10, 0));
+
+    // DÃœZELTME BURADA: 
+    // KaydÄ±rma iÅŸlemine 20'den (Dolu.size()-1) DEÄÄ°L, 19'dan baÅŸlÄ±yoruz.
+    // Ã‡Ã¼nkÃ¼ 20. satÄ±r "Zemin"dir ve oraya blok taÅŸÄ±nmamalÄ±dÄ±r.
+    int hedefSatir = 19;
+
+    // Okumaya da 19. satÄ±rdan baÅŸlÄ±yoruz
+    for (int i = 19; i >= 0; i--) {
+
+        // Bu satÄ±rÄ±n tamamen boÅŸ olup olmadÄ±ÄŸÄ±nÄ± kontrol et
+        bool bosmu = true;
+        for (int j = 0; j < 10; j++) {
+            if (Dolu[i][j] == 1) {
+                bosmu = false;
+                break;
+            }
+        }
+
+        // EÄŸer satÄ±r boÅŸ deÄŸilse, hedef satÄ±ra kopyala ve hedefi bir yukarÄ± kaydÄ±r
+        if (!bosmu) {
+            for (int j = 0; j < 10; j++) {
+                yeniDolu[hedefSatir][j] = Dolu[i][j];
+            }
+            hedefSatir--;
+        }
+        // EÄŸer satÄ±r boÅŸsa (silinmiÅŸse veya zaten boÅŸsa), kopyalamÄ±yoruz.
+        // BÃ¶ylece yukarÄ±daki dolu satÄ±rlar aÅŸaÄŸÄ±ya (boÅŸluÄŸa) kaymÄ±ÅŸ oluyor.
+    }
+
+    // 4. Eski matrisi yenisiyle deÄŸiÅŸtir
+    Dolu = yeniDolu;
+
+    // 5. GÃ¶rseli gÃ¼ncelle
+    YenidenDoluvecOlustur();
+}
+
+    // Yeni yardÄ±mcÄ± fonksiyon - Doluvec'i sÄ±fÄ±rdan oluÅŸtur:
+    void Respawn::YenidenDoluvecOlustur() {
+        Doluvec.clear();
+
+        float bloklukBoyut = 16.0f;
+
+        for (int i = 0; i < Dolu.size()-1; i++) {
+            for (int j = 0; j < Dolu[i].size(); j++) {
+                
+                if (Dolu[i][j] == 1) {
+                    // Bu bloÄŸun ekran koordinatlarÄ±nÄ± hesapla
+                    float blokX = 200 + (j + 1) * (bloklukBoyut + 1);
+                    float blokY = 100 + i * (bloklukBoyut + 1);
+                    // Bu blok iÃ§in ayrÄ± bir VertexArray oluÅŸtur
+                    sf::VertexArray tekBlok(sf::PrimitiveType::Triangles);
+                    sf::Color blokRenk = sf::Color::White;
+
+                    // 6 vertex ekle (2 Ã¼Ã§gen = 1 kare)
+                    sf::Vertex v1;
+                    v1.position = { blokX, blokY };
+                    v1.color = blokRenk;
+                    tekBlok.append(v1);
+
+                    sf::Vertex v2;
+                    v2.position = { blokX + bloklukBoyut, blokY };
+                    v2.color = blokRenk;
+                    tekBlok.append(v2);
+
+                    sf::Vertex v3;
+                    v3.position = { blokX, blokY + bloklukBoyut };
+                    v3.color = blokRenk;
+                    tekBlok.append(v3);
+
+                    sf::Vertex v4;
+                    v4.position = { blokX + bloklukBoyut, blokY };
+                    v4.color = blokRenk;
+                    tekBlok.append(v4);
+
+                    sf::Vertex v5;
+                    v5.position = { blokX + bloklukBoyut, blokY + bloklukBoyut };
+                    v5.color = blokRenk;
+                    tekBlok.append(v5);
+
+                    sf::Vertex v6;
+                    v6.position = { blokX, blokY + bloklukBoyut };
+                    v6.color = blokRenk;
+                    tekBlok.append(v6);
+
+                    Doluvec.push_back(tekBlok);
+                }
+            }
+        }
+    }
+
+  
 
     void Respawn::SatirlariKaydir(int silinenSatir)
     {
@@ -459,13 +570,13 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
 
                 int blokSatiri = (int)((minY - 100) / 17);
 
-                //  Silinen satırdaki blok -> ekleme
+                //  Silinen satÄ±rdaki blok -> ekleme
                 if (blokSatiri == silinenSatir)
                 {
                     continue;
                 }
 
-                //  Blok silinen satırın üstündeyse 1 satır aşağı indir
+                //  Blok silinen satÄ±rÄ±n Ã¼stÃ¼ndeyse 1 satÄ±r aÅŸaÄŸÄ± indir
                 sf::VertexArray yeniVA(sf::PrimitiveType::Triangles);
 
                 for (int k = 0; k < 6; k++)
@@ -504,17 +615,17 @@ Respawn::Respawn(DurumYoneticisi* yonetici) : Tile(sf::PrimitiveType::Triangles)
             SilinenS = 0;
 
         }
-        bool x = false;
+        bool xx = false;
         for (size_t i = 0; i < 2; i++) {
             for (size_t j = 0; j < Dolu[i].size(); j++) {
 
                 if (Dolu[i][j] == 1)
-                    x = true;
+                    xx = true;
 
             }
         }
 
-        if (x) {
+        if (xx) {
             Doluvec.clear();
             Sekilvec.clear();
             SilinenS = 0;
@@ -561,9 +672,9 @@ void Respawn::Guncelle(float dt) {
     std::vector<sf::FloatRect> tumEngeller = ArkaP::Engel;
 
 
-    // Dolu blokları da ekle
+    // Dolu bloklarÄ± da ekle
     for (const auto& doluBlok : Doluvec) {
-        // Her dolu şeklin bloklarını ayrı ayrı ekle
+        // Her dolu ÅŸeklin bloklarÄ±nÄ± ayrÄ± ayrÄ± ekle
         for (size_t i = 0; i < doluBlok.getVertexCount(); i += 6) {
             if (i + 5 < doluBlok.getVertexCount()) {
                 sf::Vector2f pos = doluBlok[i].position;
@@ -571,7 +682,7 @@ void Respawn::Guncelle(float dt) {
             }
         }
     }
-    Respawn::hareketGuvenlı(tumEngeller,dt);
+    Respawn::hareketGuvenlÄ±(tumEngeller,dt);
     Respawn::gra(tumEngeller,dt);
     Respawn::GameOver();
     Respawn::BilgiEkrani();
